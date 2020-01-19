@@ -34,9 +34,17 @@ let Nil () =
     assertSuccess r ENil
 
 [<Test>]
-let Keyword () =
-    let r = parseString ":keyword "
-    assertSuccess r (EKeyword "keyword")
+let Symbol () =
+    let r = parseString "symbol"
+    assertSuccess r (ESymbol ("symbol", (None)))
 
-    let r = parseString ":ns/keyword "
-    assertSuccess r (EKeyword "ns/keyword")
+    let r = parseString "prefix/suffix"
+    assertSuccess r (ESymbol ("prefix", (Some "suffix")))
+
+[<Test>]
+let Keyword () =
+    let r = parseString ":keyword"
+    assertSuccess r (EKeyword ("keyword", (None)))
+
+    let r = parseString ":ns/keyword"
+    assertSuccess r (EKeyword ("ns", (Some "keyword")))

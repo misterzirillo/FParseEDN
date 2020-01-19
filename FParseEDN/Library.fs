@@ -5,8 +5,8 @@ type Element =
     | EBoolean of bool
     | EString of string
     | ECharacter of char
-    | ESymbol of string
-    | EKeyword of string
+    | ESymbol of string * string option
+    | EKeyword of string * string option
     | EInteger of int64
     | EFloat of float
     | EList of Element list
@@ -21,9 +21,9 @@ module Parser =
     open FParsec.CharParsers
 
     // scalars
-    let private enil = stringReturn "nil" ENil <?> "nil"
-    let private efalse = stringReturn "false" (EBoolean false) <?> "boolean"
-    let private etrue = stringReturn "true" (EBoolean true) <?> "boolean"
+    let private enil = stringReturn "nil" ENil
+    let private efalse = stringReturn "false" (EBoolean false)
+    let private etrue = stringReturn "true" (EBoolean true)
 
     let private numberFormat = NumberLiteralOptions.AllowMinusSign ||| NumberLiteralOptions.AllowFraction
 
@@ -36,25 +36,48 @@ module Parser =
     // helpers
     let private digit = satisfy isDigit <?> "digit"
     let private letter = satisfy isLetter <?> "letter"
-    let private slash = pchar '/' <?> "forward slash"
-    let private colon = pchar ':' <?> "colon"
+    let private otherChars = anyOf "*!_?$%&=<>"
+    let private slash = pchar '/' <?> "/"
+    let private colon = pchar ':' <?> ":"
+    let private pound = pchar '#' <?> "#"
+
+    // symbol
+    let private esymFiller =
+        digit <|> letter <|> otherChars <|> pound <|> colon
+
+    let private esymPrefix =
+        let leadingSpecial = pchar '+' <|> pchar '-' <|> pchar '.'
+        let followingSpecial = letter <|> otherChars
+        let leadingNormal = otherChars <|> letter
+        let restChars = many esymFiller
+
+        let specialCase =
+            pipe3 leadingSpecial followingSpecial restChars (fun l f r -> [l; f;] @ r)
+
+        let normalCase =
+            pipe2 leadingNormal restChars (fun l r -> l::r)
+
+        specialCase <|> normalCase
+        |>> (List.map string >> List.reduce (+))
+
+    let private esymSuffix = slash >>. esymPrefix
+
+    let private esymWhole = esymPrefix .>>. (opt esymSuffix)
+    
+    let private esymbol = esymWhole |>> ESymbol
 
     // keyword
     let private ekw =
-        let followChar = colon <|> letter <|> digit
-        let restChar = digit <|> letter <|> slash <|> colon
-        let restChars = manyTill restChar spaces1
-
-        colon >>. (followChar .>>. restChars)
-        |>> (fun (first, rest) -> first::rest |> List.map string |> List.reduce (+))
-        |>> string |>> EKeyword
+        let leadChar = pchar ':'
+        leadChar >>. esymWhole |>> EKeyword
 
     let private eelement = choice [
-        enil
-        efalse
-        etrue
-        enumber
-        ekw
+        enil <?> "nil"
+        efalse <?> "boolean"
+        etrue <?> "boolean"
+        enumber <?> "number"
+        esymbol <?> "symbol"
+        ekw <?> "keyword"
     ]
 
     let parseString s = runParserOnString (eelement .>> eof) () "input string" s
