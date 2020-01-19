@@ -44,7 +44,10 @@ module Parser =
         let followChar = colon <|> letter <|> digit
         let restChar = digit <|> letter <|> slash <|> colon
         let restChars = manyTill restChar spaces1
-        colon >>. (followChar .>>. restChars) |>> string |>> EKeyword
+
+        colon >>. (followChar .>>. restChars)
+        |>> (fun (first, rest) -> first::rest |> List.map string |> List.reduce (+))
+        |>> string |>> EKeyword
 
     let private eelement = choice [
         enil
@@ -54,4 +57,4 @@ module Parser =
         ekw
     ]
 
-    let parseString s = runParserOnString (eelement .>> eof) () "string" s
+    let parseString s = runParserOnString (eelement .>> eof) () "input string" s
