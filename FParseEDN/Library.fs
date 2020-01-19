@@ -130,6 +130,8 @@ module Parser =
     let private eelementPair = eelement .>> (many delim) .>>. eelement
     let private emap = listBetweenStrings "{" "}" eelementPair (Map.ofList >> EMap)
 
+    let private etag = pchar '#' >>. esymWhole
+    let private etagged = etag .>> (many delim) .>>. eelement |>> ETagged
 
     do eelementRef := choice [
         enil <?> "nil"
@@ -144,6 +146,7 @@ module Parser =
         eset <?> "set"
         evec <?> "vector"
         emap <?> "map"
+        etagged <?> "tag"
     ]
 
     let parseString s = runParserOnString (eelement .>> eof) () "input string" s

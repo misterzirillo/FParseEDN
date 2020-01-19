@@ -117,3 +117,12 @@ let Map () =
             (ESymbol {name="v2"; prefix=None})
         )
     ]))
+
+[<Test>]
+let Tag () =
+    let r = parseString "#my/tag \"my string\""
+    assertSuccess r (ETagged
+        (
+            {name="tag"; prefix=(Some "my")},
+            (EString "my string")
+        ))
