@@ -36,7 +36,7 @@ let Nil () =
 [<Test>]
 let Symbol () =
     let r = parseString "symbol"
-    assertSuccess r (ESymbol ("symbol", (None)))
+    assertSuccess r (ESymbol ("symbol", None))
 
     let r = parseString "prefix/suffix"
     assertSuccess r (ESymbol ("prefix", (Some "suffix")))
@@ -44,7 +44,7 @@ let Symbol () =
 [<Test>]
 let Keyword () =
     let r = parseString ":keyword"
-    assertSuccess r (EKeyword ("keyword", (None)))
+    assertSuccess r (EKeyword ("keyword", None))
 
     let r = parseString ":ns/keyword"
     assertSuccess r (EKeyword ("ns", (Some "keyword")))
@@ -66,21 +66,21 @@ let String () =
 let List () =
     let r = parseString "(:keyword \"string\" 1)"
     assertSuccess r (EList [
-        (EKeyword ("keyword", (None)))
+        (EKeyword ("keyword", None))
         (EString "string")
         (EInteger (int64 1))
     ])
 
     let r = parseString "(:keyword,\"string\",,,1)"
     assertSuccess r (EList [
-        (EKeyword ("keyword", (None)))
+        (EKeyword ("keyword", None))
         (EString "string")
         (EInteger (int64 1))
     ])
 
     let r = parseString "(:keyword (\"string\"))"
     assertSuccess r (EList [
-        (EKeyword ("keyword", (None)))
+        (EKeyword ("keyword", None))
         (EList [
             (EString "string")
         ])
@@ -102,3 +102,17 @@ let Vector () =
             (ECharacter '\t')
         ])
     ])
+
+[<Test>]
+let Map () =
+    let r = parseString "{ \"k1\" :v1,[:k2] v2 }"
+    assertSuccess r (EMap (Map.ofList [
+        (
+            (EString "k1"),
+            (EKeyword ("v1", None))
+        )
+        (
+            (EVec [(EKeyword ("k2", None))]),
+            (ESymbol ("v2", None))
+        )
+    ]))

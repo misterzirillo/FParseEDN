@@ -105,18 +105,20 @@ module Parser =
         |>> EString
 
     let private eelement, eelementRef = createParserForwardedToRef<Element, unit>()
+    let private delim = skipAnyOf ", \t\n\r\r\n"
 
-    let private listBetweenStrings sOpen sClose t =
-        let delim = skipAnyOf ", \t\n\r\r\n"
+    let private listBetweenStrings sOpen sClose p t =
         let o = pstring sOpen .>> (many delim)
         let c = pstring sClose
-        let el = eelement .>> (many delim)
-        between o c (many el)
-        |>> t
+        let el = p .>> (many delim)
+        between o c (many el) |>> t
 
-    let private elist = listBetweenStrings "(" ")" EList
-    let private eset = listBetweenStrings "#{" "}" (set >> ESet)
-    let private evec = listBetweenStrings "[" "]" EVec
+    let private elist = listBetweenStrings "(" ")" eelement EList
+    let private eset = listBetweenStrings "#{" "}" eelement (set >> ESet)
+    let private evec = listBetweenStrings "[" "]" eelement EVec
+
+    let private eelementPair = eelement .>> (many delim) .>>. eelement
+    let private emap = listBetweenStrings "{" "}" eelementPair (Map.ofList >> EMap)
 
     do eelementRef := choice [
         enil <?> "nil"
@@ -130,6 +132,7 @@ module Parser =
         elist <?> "list"
         eset <?> "set"
         evec <?> "vector"
+        emap <?> "map"
     ]
 
     let parseString s = runParserOnString (eelement .>> eof) () "input string" s
