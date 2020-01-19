@@ -48,3 +48,16 @@ let Keyword () =
 
     let r = parseString ":ns/keyword"
     assertSuccess r (EKeyword ("ns", (Some "keyword")))
+
+[<Test>]
+let Character () =
+    let r = parseString "\\c"
+    assertSuccess r (ECharacter 'c')
+
+[<Test>]
+let String () =
+    let r = parseString "\"some string\""
+    assertSuccess r (EString "some string")
+
+    let r = parseString "\"some string\\nsome string\""
+    assertSuccess r (EString "some string\nsome string")

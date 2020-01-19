@@ -66,10 +66,43 @@ module Parser =
     
     let private esymbol = esymWhole |>> ESymbol
 
-    // keyword
+    // keyword - symbol with a : on the front
     let private ekw =
         let leadChar = pchar ':'
         leadChar >>. esymWhole |>> EKeyword
+
+    // chars an strings
+    let private escape =
+        satisfy (fun _ -> true)
+        |>> function
+            | 'b' -> '\b'
+            | 'f' -> '\u000C'
+            | 'n' -> '\n'
+            | 'r' -> '\r'
+            | 't' -> '\t'
+            | c   -> c // every other char is mapped to itself
+
+    let private unicodeEscape =
+        /// converts a hex char ([0-9a-fA-F]) to its integer number (0-15)
+        let hex2int c = (int c &&& 15) + (int c >>> 6)*9
+
+        pstring "u" >>. pipe4 hex hex hex hex (fun h3 h2 h1 h0 ->
+            (hex2int h3)*4096 + (hex2int h2)*256 + (hex2int h1)*16 + hex2int h0
+            |> char
+        )
+
+    let private escapedCharSnippet = pchar '\\' >>. (escape <|> unicodeEscape)
+
+    let private echar = escapedCharSnippet |>> ECharacter
+
+    let private normalCharSnippet = manySatisfy (fun c -> c <> '"' && c <> '\\')
+
+    let private estr =
+        let dblQuote = pstring "\""
+        let escString = escapedCharSnippet |>> string
+        between dblQuote dblQuote
+            (stringsSepBy normalCharSnippet escString)
+        |>> EString
 
     let private eelement = choice [
         enil <?> "nil"
@@ -78,6 +111,8 @@ module Parser =
         enumber <?> "number"
         esymbol <?> "symbol"
         ekw <?> "keyword"
+        echar <?> "character"
+        estr <?> "string"
     ]
 
     let parseString s = runParserOnString (eelement .>> eof) () "input string" s
