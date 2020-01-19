@@ -61,3 +61,44 @@ let String () =
 
     let r = parseString "\"some string\\nsome string\""
     assertSuccess r (EString "some string\nsome string")
+
+[<Test>]
+let List () =
+    let r = parseString "(:keyword \"string\" 1)"
+    assertSuccess r (EList [
+        (EKeyword ("keyword", (None)))
+        (EString "string")
+        (EInteger (int64 1))
+    ])
+
+    let r = parseString "(:keyword,\"string\",,,1)"
+    assertSuccess r (EList [
+        (EKeyword ("keyword", (None)))
+        (EString "string")
+        (EInteger (int64 1))
+    ])
+
+    let r = parseString "(:keyword (\"string\"))"
+    assertSuccess r (EList [
+        (EKeyword ("keyword", (None)))
+        (EList [
+            (EString "string")
+        ])
+    ])
+
+[<Test>]
+let Set () =
+    let r = parseString "#{,, 1 1 }"
+    assertSuccess r (ESet (set [
+        (EInteger (int64 1))
+    ]))
+
+[<Test>]
+let Vector () =
+    let r = parseString "[[][\\t]]"
+    assertSuccess r (EVec [
+        (EVec [])
+        (EVec [
+            (ECharacter '\t')
+        ])
+    ])

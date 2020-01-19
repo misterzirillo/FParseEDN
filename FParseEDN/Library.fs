@@ -104,7 +104,21 @@ module Parser =
             (stringsSepBy normalCharSnippet escString)
         |>> EString
 
-    let private eelement = choice [
+    let private eelement, eelementRef = createParserForwardedToRef<Element, unit>()
+
+    let private listBetweenStrings sOpen sClose t =
+        let delim = skipAnyOf ", \t\n\r\r\n"
+        let o = pstring sOpen .>> (many delim)
+        let c = pstring sClose
+        let el = eelement .>> (many delim)
+        between o c (many el)
+        |>> t
+
+    let private elist = listBetweenStrings "(" ")" EList
+    let private eset = listBetweenStrings "#{" "}" (set >> ESet)
+    let private evec = listBetweenStrings "[" "]" EVec
+
+    do eelementRef := choice [
         enil <?> "nil"
         efalse <?> "boolean"
         etrue <?> "boolean"
@@ -113,6 +127,9 @@ module Parser =
         ekw <?> "keyword"
         echar <?> "character"
         estr <?> "string"
+        elist <?> "list"
+        eset <?> "set"
+        evec <?> "vector"
     ]
 
     let parseString s = runParserOnString (eelement .>> eof) () "input string" s
