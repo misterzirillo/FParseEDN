@@ -36,18 +36,18 @@ let Nil () =
 [<Test>]
 let Symbol () =
     let r = parseString "symbol"
-    assertSuccess r (ESymbol ("symbol", None))
+    assertSuccess r (ESymbol {name="symbol"; prefix=None})
 
     let r = parseString "prefix/suffix"
-    assertSuccess r (ESymbol ("prefix", (Some "suffix")))
+    assertSuccess r (ESymbol {name="suffix"; prefix=(Some "prefix")})
 
 [<Test>]
 let Keyword () =
     let r = parseString ":keyword"
-    assertSuccess r (EKeyword ("keyword", None))
+    assertSuccess r (EKeyword {name="keyword"; prefix=None})
 
     let r = parseString ":ns/keyword"
-    assertSuccess r (EKeyword ("ns", (Some "keyword")))
+    assertSuccess r (EKeyword {name="keyword"; prefix=(Some "ns")})
 
 [<Test>]
 let Character () =
@@ -66,21 +66,21 @@ let String () =
 let List () =
     let r = parseString "(:keyword \"string\" 1)"
     assertSuccess r (EList [
-        (EKeyword ("keyword", None))
+        (EKeyword {name="keyword"; prefix=None})
         (EString "string")
         (EInteger (int64 1))
     ])
 
     let r = parseString "(:keyword,\"string\",,,1)"
     assertSuccess r (EList [
-        (EKeyword ("keyword", None))
+        (EKeyword {name="keyword"; prefix=None})
         (EString "string")
         (EInteger (int64 1))
     ])
 
     let r = parseString "(:keyword (\"string\"))"
     assertSuccess r (EList [
-        (EKeyword ("keyword", None))
+        (EKeyword {name="keyword"; prefix=None})
         (EList [
             (EString "string")
         ])
@@ -88,9 +88,10 @@ let List () =
 
 [<Test>]
 let Set () =
-    let r = parseString "#{,, 1 1 }"
+    let r = parseString "#{,, 1 1 ()()}"
     assertSuccess r (ESet (set [
         (EInteger (int64 1))
+        (EList [])
     ]))
 
 [<Test>]
@@ -109,10 +110,10 @@ let Map () =
     assertSuccess r (EMap (Map.ofList [
         (
             (EString "k1"),
-            (EKeyword ("v1", None))
+            (EKeyword {name="v1"; prefix=None})
         )
         (
-            (EVec [(EKeyword ("k2", None))]),
-            (ESymbol ("v2", None))
+            (EVec [(EKeyword {name="k2"; prefix=None})]),
+            (ESymbol {name="v2"; prefix=None})
         )
     ]))

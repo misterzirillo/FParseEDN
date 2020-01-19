@@ -1,19 +1,24 @@
 ﻿namespace FParseEDN
 
+type Symbol = {
+    name: string
+    prefix: string option
+}
+
 type Element =
     | ENil
     | EBoolean of bool
     | EString of string
     | ECharacter of char
-    | ESymbol of string * string option
-    | EKeyword of string * string option
+    | ESymbol of Symbol
+    | EKeyword of Symbol
     | EInteger of int64
     | EFloat of float
     | EList of Element list
     | EVec of Element list
     | EMap of Map<Element, Element>
     | ESet of Set<Element>
-    | ETagged of string * Element
+    | ETagged of Symbol * Element
 
 module Parser =
 
@@ -62,7 +67,12 @@ module Parser =
 
     let private esymSuffix = slash >>. esymPrefix
 
-    let private esymWhole = esymPrefix .>>. (opt esymSuffix)
+    let private esymWhole =
+        esymPrefix .>>. (opt esymSuffix)
+        |>> fun (p, s) -> 
+            match s with
+            | Some s -> { name = s; prefix = Some p }
+            | None -> { name = p; prefix = None }
     
     let private esymbol = esymWhole |>> ESymbol
 
@@ -119,6 +129,7 @@ module Parser =
 
     let private eelementPair = eelement .>> (many delim) .>>. eelement
     let private emap = listBetweenStrings "{" "}" eelementPair (Map.ofList >> EMap)
+
 
     do eelementRef := choice [
         enil <?> "nil"
