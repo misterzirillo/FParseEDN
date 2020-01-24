@@ -13,7 +13,7 @@ type Element =
     | ESymbol of Symbol
     | EKeyword of Symbol
     | EInteger of int64
-    | EFloat of float
+    | EFloat of double
     | EList of Element list
     | EVec of Element list
     | EMap of Map<Element, Element>
