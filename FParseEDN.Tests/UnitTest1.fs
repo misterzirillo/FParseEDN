@@ -106,7 +106,7 @@ let Vector () =
 
 [<Test>]
 let Map () =
-    let r = parseString "{ \"k1\" :v1,[:k2] v2 }"
+    let r = parseString "{ \"k1\" :v1,[:k2] v2}"
     assertSuccess r (EMap (Map.ofList [
         (
             (EString "k1"),

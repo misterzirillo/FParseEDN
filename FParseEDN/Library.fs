@@ -115,7 +115,7 @@ module Parser =
         |>> EString
 
     let private eelement, eelementRef = createParserForwardedToRef<Element, unit>()
-    let private delim = skipAnyOf ", \t\n\r\r\n"
+    let private delim = skipAnyOf ", \t\n\r\r\n" <?> "delimiter"
 
     let private listBetweenStrings sOpen sClose p t =
         let o = pstring sOpen .>> (many delim)
@@ -127,7 +127,7 @@ module Parser =
     let private eset = listBetweenStrings "#{" "}" eelement (set >> ESet)
     let private evec = listBetweenStrings "[" "]" eelement EVec
 
-    let private eelementPair = eelement .>> (many delim) .>>. eelement
+    let private eelementPair = (eelement <?> "map key") .>> (many delim) .>>. (eelement <?> "map value")
     let private emap = listBetweenStrings "{" "}" eelementPair (Map.ofList >> EMap)
 
     let private etag = pchar '#' >>. esymWhole
