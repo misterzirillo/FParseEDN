@@ -5,6 +5,9 @@ A (mostly correct) EDN parser for .NET
 EDN is defined [here](https://github.com/edn-format/edn).
 It is implemented in F# using the excellent [fparsec](https://github.com/stephan-tolksdorf/fparsec) parser combinator library.
 
+## Usage
+This library exposes a single function: `FParseEDN.Parser.parseString(string edn)`.
+
 ## TODO
 - implement comments
 - implement discard
